@@ -23,7 +23,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-static const unsigned char xxuheader[] = {
+static char xxuheader[] = {
 	/* Signature */
 	'*', '*', 'T', 'I', 'F', 'L', '*', '*',
 
@@ -170,13 +170,13 @@ int main(int argc, char *argv[])
 		pdie(outfilename);
 	}
 
-	// copy xxu header to output file
-	n = fwrite(xxuheader, 1, sizeof xxuheader, outfile);
-	if (n != sizeof xxuheader) {
+	// skip over header (fill it out and write it later)
+	if (fseek(outfile, sizeof xxuheader, SEEK_SET)) {
 		pdie(outfilename);
 	}
 
-	// copy input file to output file
+	/* copy input file to output file */
+
 	while ((n = fread(buf, 1, sizeof buf, infile))) {
 		insize += n;
 		if (fwrite(buf, 1, n, outfile) != n) {
@@ -184,20 +184,26 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	// write TI calc type to output file
-	if (fseek(outfile, 0x30, SEEK_SET)) {
-		pdie(outfilename);
-	}
-	fputc(type, outfile);
+	/* fill out the header */
 
-	// write tib size to output file
-	if (fseek(outfile, 0x4A, SEEK_SET)) {
+
+	// calculator type
+	xxuheader[0x30] = type;
+
+	// tib size
+	xxuheader[0x4a] = insize >>  0;
+	xxuheader[0x4b] = insize >>  8;
+	xxuheader[0x4c] = insize >> 16;
+	xxuheader[0x4d] = insize >> 24;
+
+	/* write xxu header to beginning of output file */
+
+	rewind(outfile);
+
+	n = fwrite(xxuheader, 1, sizeof xxuheader, outfile);
+	if (n != sizeof xxuheader) {
 		pdie(outfilename);
 	}
-	fputc(insize >>  0, outfile);
-	fputc(insize >>  8, outfile);
-	fputc(insize >> 16, outfile);
-	fputc(insize >> 24, outfile);
 
 	fclose(outfile);
 	fclose(infile);
