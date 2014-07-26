@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <time.h>
 
 static char xxuheader[] = {
 	/* Signature */
@@ -115,6 +116,11 @@ static void pdie(const char *msg)
 	exit(1);
 }
 
+static int int2bcd(int n)
+{
+	return ((n / 10) << 4) | (n % 10);
+}
+
 int main(int argc, char *argv[])
 {
 	const char *infilename;
@@ -131,6 +137,14 @@ int main(int argc, char *argv[])
 	size_t insize = 0;
 
 	int opt;
+
+	time_t now;
+
+	struct tm *tm;
+
+	int month;
+	int day;
+	int year;
 
 	argv0 = argv[0];
 
@@ -186,6 +200,19 @@ int main(int argc, char *argv[])
 
 	/* fill out the header */
 
+	now = time(NULL);
+
+	tm = localtime(&now);
+
+	month = tm->tm_mon + 1;
+	day = tm->tm_mday;
+	year = tm->tm_year + 1900;
+
+	// BCD date
+	xxuheader[12] = int2bcd(month);
+	xxuheader[13] = int2bcd(day);
+	xxuheader[14] = int2bcd(year / 100);
+	xxuheader[15] = int2bcd(year % 100);
 
 	// calculator type
 	xxuheader[0x30] = type;
