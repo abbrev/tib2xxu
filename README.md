@@ -6,6 +6,11 @@ This program converts a TIB file to an XXU (89u, 9xu, or v2u) file.
 This program is loosely based on the tib2xxu program provided with
 FreeFlash by Olivier Armand.
 
+Build instructions
+------------------
+
+Run 'make' in the source directory.
+
 Usage
 -----
 
